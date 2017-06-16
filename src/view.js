@@ -10,12 +10,12 @@ import { makeError } from './util/log';
  * @param {string} eventType
  */
 const ensureActionable = (view, eventType) => {
-	if (view.actionable.includes(eventType)) {
-		return;
-	}
+  if (view.actionable.includes(eventType)) {
+    return;
+  }
 
-	view.actionable.push(eventType);
-	view.element.addEventListener(eventType, createEventListenerCallback(view, eventType));
+  view.actionable.push(eventType);
+  view.element.addEventListener(eventType, createEventListenerCallback(view, eventType));
 };
 
 /**
@@ -27,16 +27,16 @@ const ensureActionable = (view, eventType) => {
  * @return {function}
  */
 const createEventListenerCallback = (view, eventType) => {
-	return (browserEvent) => {
-		const actions = view.actions.get(eventType);
-		const { target } = browserEvent;
+  return (browserEvent) => {
+    const actions = view.actions.get(eventType);
+    const { target } = browserEvent;
 
-		actions.forEach((callback, selector) => {
-			if (target.matches(selector)) {
-				callback(view.store.dispatch, browserEvent);
-			}
-		});
-	};
+    actions.forEach((callback, selector) => {
+      if (target.matches(selector)) {
+        callback(view.store.dispatch, browserEvent);
+      }
+    });
+  };
 };
 
 /**
@@ -46,24 +46,24 @@ const createEventListenerCallback = (view, eventType) => {
  * @param {View} view
  */
 const createStoreSubscribeListener = (view) => {
-	let currentState;
+  let currentState;
 
-	return () => {
-		const nextState = view.store.getState();
+  return () => {
+    const nextState = view.store.getState();
 
-		view.listeners.forEach((callbacks, propertyAccessor) => {
-			const oldValue = accessProperty(currentState, propertyAccessor);
-			const newValue = accessProperty(nextState, propertyAccessor);
+    view.listeners.forEach((callbacks, propertyAccessor) => {
+      const oldValue = accessProperty(currentState, propertyAccessor);
+      const newValue = accessProperty(nextState, propertyAccessor);
 
-			if (!shallowEqual(oldValue, newValue)) {
-				callbacks.forEach(callback => {
-					callback(oldValue, newValue);
-				});
-			}
-		});
+      if (!shallowEqual(oldValue, newValue)) {
+        callbacks.forEach(callback => {
+          callback(oldValue, newValue);
+        });
+      }
+    });
 
-		currentState = nextState;
-	};
+    currentState = nextState;
+  };
 };
 
 /**
@@ -73,96 +73,96 @@ const createStoreSubscribeListener = (view) => {
  * @throws {Error}
  */
 const checkOptionsAreValid = (options) => {
-	if (typeof accessProperty(options, 'element.tagName') !== 'string') {
-		makeError(View.displayName, 'options.element must be an Element');
-	}
+  if (typeof accessProperty(options, 'element.tagName') !== 'string') {
+    makeError(View.displayName, 'options.element must be an Element');
+  }
 
-	if (typeof accessProperty(options, 'store') !== 'object') {
-		makeError(View.displayName, 'options.store must be defined');
-	}
+  if (typeof accessProperty(options, 'store') !== 'object') {
+    makeError(View.displayName, 'options.store must be defined');
+  }
 
-	const { store } = options;
+  const { store } = options;
 
-	if (
-		typeof accessProperty(store, 'dispatch') !== 'function' ||
-		typeof accessProperty(store, 'subscribe') !== 'function'
-	) {
-		makeError(View.displayName, 'options.store must be a Redux store');
-	}
+  if (
+    typeof accessProperty(store, 'dispatch') !== 'function' ||
+    typeof accessProperty(store, 'subscribe') !== 'function'
+  ) {
+    makeError(View.displayName, 'options.store must be a Redux store');
+  }
 };
 
 export class View {
-	/**
-	 * @constructor
-	 *
-	 * @param {object} options
-	 * @param {Element} options.element
-	 * @param {ReduxStore} options.store
-	 */
-	constructor (options = {}) {
-		const {
-			element = null,
-			store = null
-		} = options;
+  /**
+   * @constructor
+   *
+   * @param {object} options
+   * @param {Element} options.element
+   * @param {ReduxStore} options.store
+   */
+  constructor (options = {}) {
+    const {
+      element = null,
+      store = null
+    } = options;
 
-		checkOptionsAreValid(options);
+    checkOptionsAreValid(options);
 
-		/** @type {Element} - A reference to the top-level element for this view */
-		this.element = element;
+    /** @type {Element} - A reference to the top-level element for this view */
+    this.element = element;
 
-		/** A redux store */
-		this.store = store;
+    /** A redux store */
+    this.store = store;
 
-		/** @type {Map<string, Map>} - Internal state of registered actions */
-		this.actions = new Map();
+    /** @type {Map<string, Map>} - Internal state of registered actions */
+    this.actions = new Map();
 
-		/** @type {array} - Internal state of event types that are actionable */
-		this.actionable = [];
+    /** @type {array} - Internal state of event types that are actionable */
+    this.actionable = [];
 
-		/** @type {Map<string, array>} - Internal state of Redux listener callbacks */
-		this.listeners = new Map();
+    /** @type {Map<string, array>} - Internal state of Redux listener callbacks */
+    this.listeners = new Map();
 
-		this.store.subscribe(createStoreSubscribeListener(this));
-	}
+    this.store.subscribe(createStoreSubscribeListener(this));
+  }
 
-	/**
-	 * Add an event handler, delegated to events fired on elements matching a selector.
-	 *
-	 * @param {string} eventType
-	 * @param {string} selector
-	 * @param {function} callback
-	 */
-	delegate (eventType, selector, callback) {
-		let eventActions;
+  /**
+   * Add an event handler, delegated to events fired on elements matching a selector.
+   *
+   * @param {string} eventType
+   * @param {string} selector
+   * @param {function} callback
+   */
+  delegate (eventType, selector, callback) {
+    let eventActions;
 
-		if (!this.actions.has(eventType)) {
-			eventActions = new Map();
-			this.actions.set(eventType, eventActions);
-		} else {
-			eventActions = this.actions.get(eventType);
-		}
+    if (!this.actions.has(eventType)) {
+      eventActions = new Map();
+      this.actions.set(eventType, eventActions);
+    } else {
+      eventActions = this.actions.get(eventType);
+    }
 
-		if (!eventActions.has(selector)) {
-			eventActions.set(selector, callback);
-			ensureActionable(this, eventType);
-		}
-	}
+    if (!eventActions.has(selector)) {
+      eventActions.set(selector, callback);
+      ensureActionable(this, eventType);
+    }
+  }
 
-	/**
-	 * Add a callback to be fired when properties on the Redux state change.
-	 *
-	 * @param {string} propertyAccessor
-	 * @param {function} callback
-	 */
-	listen (propertyAccessor, callback) {
-		if (!Array.isArray(this.listeners.get(propertyAccessor))) {
-			this.listeners.set(propertyAccessor, []);
-		}
+  /**
+   * Add a callback to be fired when properties on the Redux state change.
+   *
+   * @param {string} propertyAccessor
+   * @param {function} callback
+   */
+  listen (propertyAccessor, callback) {
+    if (!Array.isArray(this.listeners.get(propertyAccessor))) {
+      this.listeners.set(propertyAccessor, []);
+    }
 
-		const callbacks = this.listeners.get(propertyAccessor);
-		callbacks.push(callback);
-		this.listeners.set(propertyAccessor, callbacks);
-	}
+    const callbacks = this.listeners.get(propertyAccessor);
+    callbacks.push(callback);
+    this.listeners.set(propertyAccessor, callbacks);
+  }
 }
 
 View.displayName = 'View';
