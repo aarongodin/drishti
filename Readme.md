@@ -5,7 +5,7 @@
 ### Features
 
 - Delegate browser events
-- Connect arbitrary classes to Redux state values, similar to [react-redux](https://github.com/reactjs/react-redux/)'s `connect()`
+- Connect functions to Redux state values, similar to [react-redux](https://github.com/reactjs/react-redux/)'s `connect()`
 
 ### Usage
 
