@@ -5,7 +5,7 @@
   "main": "dist/drishti.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "prepublish": "npm run clean && npm run build && npm run build:minify",
+    "prepare": "npm run clean && npm run build && npm run build:minify",
     "build": "BABEL_ENV=rollup rollup -c",
     "build:minify": "uglifyjs dist/drishti.js -o dist/drishti.min.js --source-map",
     "test": "BABEL_ENV=test jest",
