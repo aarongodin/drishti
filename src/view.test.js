@@ -1,5 +1,6 @@
 import { View } from './view';
 import { createStore } from 'redux';
+import simulant from 'simulant';
 
 const identityReducer = (state, action) => Object.assign({}, state);
 
@@ -39,7 +40,6 @@ describe('View', () => {
         expect(v.element).toEqual(element);
         expect(v.store).toEqual(store);
         expect(v.actions).toBeInstanceOf(Map);
-        expect(v.actionable).toBeInstanceOf(Set);
         expect(v.listeners).toBeInstanceOf(Map);
       });
     });
@@ -55,7 +55,6 @@ describe('View', () => {
         const callback = jest.fn();
         v.delegate('click', '.test', callback);
 
-        expect(v.actionable.has('click')).toBe(true);
         expect(v.actions.has('click')).toBe(true);
         expect(v.actions.get('click').get('.test')).toEqual(callback);
       });
@@ -73,7 +72,6 @@ describe('View', () => {
           v.delegate('click', '.test', callback);
           v.delegate('click', '.test2', callback2);
 
-          expect(v.actionable.has('click')).toBe(true);
           expect(v.actions.has('click')).toBe(true);
           expect(v.actions.get('click').get('.test')).toEqual(callback);
           expect(v.actions.get('click').get('.test2')).toEqual(callback2);
@@ -91,11 +89,62 @@ describe('View', () => {
           v.delegate('click', '.test', callback);
           v.delegate('click', '.test', callback2);
 
-          expect(v.actionable.has('click')).toBe(true);
           expect(v.actions.has('click')).toBe(true);
           expect(v.actions.get('click').get('.test')).toEqual(callback);
         });
       });
+    });
+
+    describe('given I click on a matching element', () => {
+      it('should fire the callback', () => {
+        const element = document.createElement('div');
+        element.innerHTML = `
+          <p><span class="test">Test</span></p>
+        `;
+
+        const store = createStore(identityReducer);
+        const callback = jest.fn();
+        const v = new View({ element, store });
+        v.delegate('click', 'span.test', callback);
+
+        simulant.fire(element.querySelector('span.test'), 'click');
+        expect(callback).toHaveBeenCalledWith(store.dispatch, expect.any(MouseEvent));
+      });
+    });
+
+    describe('given I click on a non-matching element', () => {
+      it('should fire the callback', () => {
+        const element = document.createElement('div');
+        element.innerHTML = `
+          <p><span class="test">Test</span><span class="non-matching">Non Matching</span></p>
+        `;
+
+        const store = createStore(identityReducer);
+        const callback = jest.fn();
+        const v = new View({ element, store });
+        v.delegate('click', 'span.test', callback);
+
+        simulant.fire(element.querySelector('span.non-matching'), 'click');
+        expect(callback).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('undelegateAll', () => {
+    it('should remove all event listeners', () => {
+      const element = document.createElement('div');
+      element.innerHTML = `
+          <p><span class="test">Test</span><span class="non-matching">Non Matching</span></p>
+        `;
+
+      const store = createStore(identityReducer);
+      const callback = jest.fn();
+      const v = new View({ element, store });
+      v.delegate('click', 'span.test', callback);
+      v.undelegateAll();
+
+      simulant.fire(element.querySelector('span.test'), 'click');
+      expect(callback).not.toHaveBeenCalled();
     });
   });
 

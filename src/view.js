@@ -12,15 +12,18 @@ const INST_EVENT_LISTENERS = Symbol('INST_EVENT_LISTENERS');
  * @param {string} eventType
  */
 const ensureActionable = (view, eventType) => {
-  if (view.actionable.has(eventType)) {
+  const instance = instances.get(view);
+  const listeners = instance.get(INST_EVENT_LISTENERS);
+
+  if (listeners.some(([actionableEventType]) => eventType === actionableEventType)) {
     return;
   }
 
   const eventListener = createEventListenerCallback(view, eventType);
 
   view.element.addEventListener(eventType, eventListener);
-  view.actionable.add(eventType);
-  instances.get(view).set(INST_EVENT_LISTENERS, [eventType, eventListener]);
+  listeners.push([eventType, eventListener]);
+  instance.set(INST_EVENT_LISTENERS, listeners);
 };
 
 /**
@@ -130,14 +133,11 @@ export class View {
     /** @type {Map<string, Map>} - Internal state of registered actions */
     this.actions = new Map();
 
-    /** @type {Set<string>} - Internal state of event types that are actionable */
-    this.actionable = new Set();
-
     /** @type {Map<string, array>} - Internal state of Redux listener callbacks */
     this.listeners = new Map();
 
     this.store.subscribe(createStoreSubscribeListener(this));
-    instances.set(this, new Map());
+    instances.set(this, new Map([[INST_EVENT_LISTENERS, []]]));
   }
 
   /**
@@ -175,7 +175,7 @@ export class View {
     });
 
     instance.set(INST_EVENT_LISTENERS, []);
-    this.actionable.clear();
+    this.actions.clear();
   }
 
   /**
