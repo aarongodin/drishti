@@ -1,61 +1,92 @@
 # drishti
 
-*Drishti* is a focused, intentful view wrapper around [Redux](https://github.com/reactjs/redux) meant for lean front-end applications.
+*Drishti* is a focused, minimal view wrapper around [Redux](https://github.com/reactjs/redux) meant for teeny tiny front-end applications.
 
 ### Features
 
 - Delegate browser events
-- Connect functions to Redux state values, similar to [react-redux](https://github.com/reactjs/react-redux/)'s `connect()`
+- Connect functions to Redux state values
 
-### Usage
-
-The `View` class can be instantiated directly or extended.
-
-*Usage as an instance*
+## View
 
 ```js
 import { View } from 'drishti';
-
-// call redux.createStore()
-
-const headerElement = document.querySelector('#header');
-const headerView = new View({ store, element: headerElement });
-
-const handleNavigation = (dispatch, browserEvent) => {
-  // dispatch an action
-};
-
-const setSearchDrawarVisibility = (oldValue, newValue) => {
-  headerElement.querySelector('.search-drawar').classList.toggle('visible', newValue);
-};
-
-headerView.delegate('click', 'nav a.search-link', handleNavigation);
-headerView.listen('searchDrawar.visible', setSearchDrawarVisibility);
 ```
 
-*...and the same code written as a class.*
+The *View* class exposes two primary methods for interacting with Redux and the DOM—`delegate` and `listen`. The easiest way to use these is to create a class that extends *View*. Calling `delegate` and `listen` in your constructor is the best place to initialize callbacks for DOM events and Redux state changes.
+
+#### constructor
+
+A *View* requires two arguments: an element and a redux store.
 
 ```js
-import { View } from 'drishti';
+const element = document.createElement('div');
+const store = createStore((state, action) => state);
 
-// call redux.createStore()
+const view = new View({ element, store });
+```
 
+*Usage in a class*—be sure to call `super` with the passed options. For example:
+
+```js
 class HeaderView extends View {
   constructor (options) {
     super(options);
 
-    this.delegate('click', 'nav a.search-link', this.handleNavigation);
-    this.listen('searchDrawar.visible', setSearchDrawarVisibility);
-  }
-
-  handleNavigation (dispatch, browserEvent) {
-    // dispatch an action
-  }
-
-  setSearchDrawarVisibility (oldValue, newValue) {
-    headerElement.querySelector('.search-drawar').classList.toggle('visible', newValue);
+    // ...
   }
 }
 ```
 
-### Detailed docs incoming
+#### delegate
+
+`delegate(eventType: string, selector: string, callback: func): void`
+
+Add a DOM event listener, delegated to events fired on elements matching a selector.
+
+*Ex:*
+
+```js
+this.delegate('click', '.navigation-item', (dispatch, event) => {
+  dispatch(actions.followNavigation());
+});
+```
+
+The `callback` argument is called with two arguments: the Redux store's `dispatch` function and the native browser Event object:
+
+`callback(dispatch: func, browserEvent: Event): any`
+
+#### listen
+
+`listen(propertyAccessor: string, callback: func): void`
+
+Add a callback to be fired when properties on the Redux state change.
+
+*Ex:*
+
+```js
+this.listen('search.visibility', (previous, next) => {
+  this.element.classList.toggle('visible', next);
+});
+```
+
+Callbacks for `listen()` are given the previous value and next value for the property as arguments.
+
+`callback(previous: any, next: any): any`
+
+#### undelegateAll
+
+`undelegateAll(): void`
+
+Remove the view's delegated event listeners.
+
+## Dependencies
+
+*drishti* has no external dependencies but does depend on these browser APIs:
+
+- WeakMap
+- Map
+- Set
+- Symbol
+
+I recommend [polyfilling these APIs](https://github.com/zloirock/core-js) if you need to support older browsers.

@@ -2,6 +2,8 @@ import accessProperty from './util/access-property';
 import shallowEqual from './util/shallow-equal';
 import { makeError } from './util/log';
 
+const INST_EVENT_LISTENERS = Symbol('INST_EVENT_LISTENERS');
+
 /**
  * @private
  * Register an event type as actionable by adding a DOM event listener.
@@ -10,12 +12,15 @@ import { makeError } from './util/log';
  * @param {string} eventType
  */
 const ensureActionable = (view, eventType) => {
-  if (view.actionable.includes(eventType)) {
+  if (view.actionable.has(eventType)) {
     return;
   }
 
-  view.actionable.push(eventType);
-  view.element.addEventListener(eventType, createEventListenerCallback(view, eventType));
+  const eventListener = createEventListenerCallback(view, eventType);
+
+  view.element.addEventListener(eventType, eventListener);
+  view.actionable.add(eventType);
+  instances.get(view).set(INST_EVENT_LISTENERS, [eventType, eventListener]);
 };
 
 /**
@@ -46,7 +51,7 @@ const createEventListenerCallback = (view, eventType) => {
  * @param {View} view
  */
 const createStoreSubscribeListener = (view) => {
-  let currentState;
+  let currentState = view.store.getState();
 
   return () => {
     const nextState = view.store.getState();
@@ -67,6 +72,7 @@ const createStoreSubscribeListener = (view) => {
 };
 
 /**
+ * @private
  * Check options passed to the View constructor are valid.
  *
  * @param {object} options
@@ -74,7 +80,7 @@ const createStoreSubscribeListener = (view) => {
  */
 const checkOptionsAreValid = (options) => {
   if (typeof accessProperty(options, 'element.tagName') !== 'string') {
-    makeError(View.displayName, 'options.element must be an Element');
+    makeError(View.displayName, 'options.element must be an Element.');
   }
 
   if (typeof accessProperty(options, 'store') !== 'object') {
@@ -90,6 +96,14 @@ const checkOptionsAreValid = (options) => {
     makeError(View.displayName, 'options.store must be a Redux store');
   }
 };
+
+/**
+ * @private
+ * Private instance variables.
+ *
+ * @type {WeakMap<View, Map>}
+ */
+const instances = new WeakMap();
 
 export class View {
   /**
@@ -116,13 +130,14 @@ export class View {
     /** @type {Map<string, Map>} - Internal state of registered actions */
     this.actions = new Map();
 
-    /** @type {array} - Internal state of event types that are actionable */
-    this.actionable = [];
+    /** @type {Set<string>} - Internal state of event types that are actionable */
+    this.actionable = new Set();
 
     /** @type {Map<string, array>} - Internal state of Redux listener callbacks */
     this.listeners = new Map();
 
     this.store.subscribe(createStoreSubscribeListener(this));
+    instances.set(this, new Map());
   }
 
   /**
@@ -146,6 +161,21 @@ export class View {
       eventActions.set(selector, callback);
       ensureActionable(this, eventType);
     }
+  }
+
+  /**
+   * Remove the view's delegated event listeners.
+   */
+  undelegateAll () {
+    const instance = instances.get(this);
+    const listeners = instance.get(INST_EVENT_LISTENERS);
+
+    listeners.forEach(([eventType, eventListener]) => {
+      this.element.removeEventListener(eventType, eventListener);
+    });
+
+    instance.set(INST_EVENT_LISTENERS, []);
+    this.actionable.clear();
   }
 
   /**

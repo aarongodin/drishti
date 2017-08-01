@@ -5,8 +5,9 @@
   "main": "dist/drishti.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "prepublish": "npm run clean && npm run build",
+    "prepublish": "npm run clean && npm run build && npm run build:minify",
     "build": "BABEL_ENV=rollup rollup -c",
+    "build:minify": "uglifyjs dist/drishti.js -o dist/drishti.min.js --source-map",
     "test": "BABEL_ENV=test jest",
     "lint": "eslint src"
   },
@@ -17,12 +18,14 @@
   "author": "Aaron Godin <godinaaweb@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "babel-jest": "^20.0.3",
-    "babel-preset-es2015": "^6.24.1",
+    "babel-jest": "20.0.3",
+    "babel-preset-es2015": "6.24.1",
     "babel-preset-es2015-rollup": "3.0.0",
-    "eslint": "^3.19.0",
-    "jest": "^20.0.3",
-    "rollup": "^0.43.0",
-    "rollup-plugin-babel": "^2.7.1"
+    "eslint": "3.19.0",
+    "jest": "20.0.3",
+    "redux": "3.7.2",
+    "rollup": "0.43.0",
+    "rollup-plugin-babel": "2.7.1",
+    "uglify-js": "3.0.27"
   }
 }
