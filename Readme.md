@@ -2,6 +2,8 @@
 
 *Drishti* is a focused, minimal view for [Redux](https://github.com/reactjs/redux) meant for teeny tiny front-end applications.
 
+[![npm](https://img.shields.io/npm/v/drishti.svg?style=flat-square)](https://www.npmjs.com/package/drishti)
+
 ### Features
 
 - Delegate browser events
