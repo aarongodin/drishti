@@ -1,6 +1,6 @@
 # drishti
 
-*Drishti* is a focused, minimal view wrapper around [Redux](https://github.com/reactjs/redux) meant for teeny tiny front-end applications.
+*Drishti* is a focused, minimal view for [Redux](https://github.com/reactjs/redux) meant for teeny tiny front-end applications.
 
 ### Features
 
